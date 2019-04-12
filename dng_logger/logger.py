@@ -14,7 +14,7 @@ class log:
     autoflush=True
 
     @staticmethod
-    def start(message=None, logfile=None, args=None, stdout_also=True):
+    def start(logfile=None, message=None, args=None, stdout_also=True):
         if logfile and type(logfile) == type('a'):
             log.logfile_path=logfile
             log.logfile=open(logfile, 'w')
@@ -66,7 +66,7 @@ class log:
         sys.stderr = log.getstream()
 
     @staticmethod
-    def track(total=None, message='{0}%', writeInterval=1, stdoutOnly=False):
+    def track(message='{0:,}', total=None, writeInterval=1, stdoutOnly=False):
         # if message was given as a string, convert it to a lambda function
         if type(message) == type('str'):
             msgFormat = message 
