@@ -1,5 +1,8 @@
 import sys
 import time
+import codecs
+from datetime import datetime
+from collections import OrderedDict
 
 class log:
     logfile_path=None
@@ -130,6 +133,90 @@ class log:
             log.writeln(str.format(message, elpsed))
         else:
             raise Exception('No timer to stop!')
+
+    @staticmethod
+    def writeConfig(settings, title=None, start_time=None, end_time=None):
+        '''Write an experimental configuration to the log.
+
+        Always writes the current date and time at the head of the file.
+
+        The optional title argument is a string to write at the head of the file,
+            before date and time.
+
+        Settings should be passed in as a list, in the desired order for writing.
+        To write the value of a single setting, pass it as (name, value) pair.
+        To group several settings under a section, pass a (name, dict) pair, where
+            the first element is the name of the section, and the second is a
+            dict (or OrderedDict) of { setting: value } format.
+
+        For example, the following call:
+            log.writeConfig([
+                ('Value 1', 3),
+                ('Some other setting', True),
+                ('Section 1', OrderedDict([
+                    ('sub-value A', 12.4),
+                    ('sub-value B', 'string')
+                ]))
+            ], title='My experimental configuration')
+        will produce the following configuration log:
+            
+            My experimental configuration
+            Run time: 1970-01-01 00:00:00
+
+            Value 1: 3
+            Some other setting: True
+
+            ## Section 1 ##
+            sub-value A: 12.4
+            sub-value B: string
+
+
+        Arguments:
+
+            settings   :: (described above)
+            title      :: optional string to write at start of config file
+            start_time :: a datetime.datetime object indicating when the program started
+                          execution; if not provided, defaults to datetime.now()
+            end_time   :: a datetime.datetime object indicating when the program ended
+                          execution; if provided, also writes elapsed execution time
+                          between start_time and end_time
+        '''
+
+        group_set = set([dict, OrderedDict, list, tuple])
+        dict_set = set([dict, OrderedDict])
+
+        # headers
+        if title:
+            log.write('%s\n' % title)
+
+        time_fmt = '%Y-%m-%d %H:%M:%S'
+
+        if start_time is None:
+            start_time = datetime.now()
+            header = 'Run'
+        else:
+            header = 'Start'
+        log.write('%s time: %s\n' % (header, start_time.strftime(time_fmt)))
+
+        if end_time:
+            log.write('End time: %s\n' % end_time.strftime(time_fmt))
+            log.write('Execution time: %f seconds\n' % (end_time - start_time).total_seconds())
+        log.write('\n')
+
+        for (key, value) in settings:
+            if type(value) in group_set:
+                log.write('\n## %s ##\n' % key)
+                if type(value) in dict_set:
+                    iterator = value.items()
+                else:
+                    iterator = iter(value)
+                for (sub_key, sub_value) in iterator:
+                    log.write('%s: %s\n' % (sub_key, str(sub_value)))
+                log.write('\n')
+            else:
+                log.write('%s: %s\n' % (key, str(value)))
+
+        log.write('\n')
 
 class ProgressTracker:
     def __init__(self, total=None, onIncrement=None, onFlush=None, writeInterval=1):
