@@ -37,19 +37,37 @@ class log:
     def getstream():
         return log.logfile
     @staticmethod
-    def write(message, stdoutOnly=False):
-        if log.stdout_also and (log.getstream() != sys.stdout):
+    def write(message, stdoutOnly=False, quiet=False):
+        '''Write a string to the log stream, and optionally to stdout
+        as well.
+
+        Raises Exception if log.stop() has been called.
+
+        @parameter message :: The string to write
+        @parameter stdoutOnly :: If False (default value), write message to the
+                                 log stream. If True, only write message to
+                                 stdout.
+        @parameter quiet :: If False (default value), write message to stdout
+                            (if log.stdout_also == True). If True, only write
+                            message to the log stream.
+        '''
+        if log.stopped:
+            raise Exception("Log has stopped!")
+        if log.stdout_also and (log.getstream() != sys.stdout) and (not quiet):
             sys.stdout.write(message)
-        if stdoutOnly and log.getstream() != sys.stdout:
+        if (
+            (stdoutOnly and log.getstream() != sys.stdout)
+            or (log.stdout_also and log.getstream() == sys.stdout and quiet)
+            or ((not log.stdout_also) and log.getstream() == sys.stdout)
+        ):
             return
-        if not log.stopped:
+        else:
             log.getstream().write(message)
             if log.autoflush: log.getstream().flush()
-        else:
-            raise Exception("Log has stopped!")
     @staticmethod
-    def writeln(message='', stdoutOnly=False):
-        log.write(message, stdoutOnly=stdoutOnly); log.write('\n', stdoutOnly=stdoutOnly)
+    def writeln(message='', stdoutOnly=False, quiet=False):
+        log.write(message, stdoutOnly=stdoutOnly, quiet=quiet)
+        log.write('\n', stdoutOnly=stdoutOnly, quiet=quiet)
     @staticmethod
     def progress(current, total, numDots=0, stdoutOnly=False):
         line = str.format('\r{0}{1}%', numDots*'.', int((float(current)/total)*100))
