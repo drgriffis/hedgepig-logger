@@ -12,6 +12,7 @@ class log:
     tracker=None
     timer=None
     autoflush=True
+    indent_level=0
 
     @staticmethod
     def start(logfile=None, message=None, args=None, stdout_also=True):
@@ -24,6 +25,7 @@ class log:
         elif message and type(message) == type('str'):
             log.writeln(message)
         log.stdout_also=stdout_also
+        log.indent_level=0
     @staticmethod
     def stop(message=None, suppress=False):
         if message:
@@ -36,6 +38,12 @@ class log:
     @staticmethod
     def getstream():
         return log.logfile
+    @staticmethod
+    def indent(by=2):
+        log.indent_level += by
+    @staticmethod
+    def unindent(by=2):
+        log.indent_level = max(0, log.indent_level-by)
     @staticmethod
     def write(message, stdoutOnly=False, quiet=False):
         '''Write a string to the log stream, and optionally to stdout
@@ -54,7 +62,7 @@ class log:
         if log.stopped:
             raise Exception("Log has stopped!")
         if log.stdout_also and (log.getstream() != sys.stdout) and (not quiet):
-            sys.stdout.write(message)
+            sys.stdout.write((log.indent_level*' ') + message)
         if (
             (stdoutOnly and log.getstream() != sys.stdout)
             or (log.stdout_also and log.getstream() == sys.stdout and quiet)
@@ -62,7 +70,7 @@ class log:
         ):
             return
         else:
-            log.getstream().write(message)
+            log.getstream().write((log.indent_level*' ') + message)
             if log.autoflush: log.getstream().flush()
     @staticmethod
     def writeln(message='', stdoutOnly=False, quiet=False):
@@ -96,17 +104,17 @@ class log:
         # set up the onIncrement lambda for current/total or current only
         if total:
             onIncrement = lambda current, total, args: log.write(
-                str.format('\r{0}', message(current, total, args)), stdoutOnly=True
+                str.format('\r{0}{1}', log.indent_level*' ', message(current, total, args)), stdoutOnly=True
             )
             onFlush = lambda current, total, args: log.write(
-                str.format('\r{0}', message(current, total, args)), stdoutOnly=stdoutOnly
+                str.format('\r{0}{1}', log.indent_level*' ', message(current, total, args)), stdoutOnly=stdoutOnly
             )
         else:
             onIncrement = lambda current, args: log.write(
-                str.format('\r{0}', message(current, args)), stdoutOnly=True
+                str.format('\r{0}{1}', log.indent_level*' ', message(current, args)), stdoutOnly=True
             )
             onFlush = lambda current, args: log.write(
-                str.format('\r{0}', message(current, args)), stdoutOnly=stdoutOnly
+                str.format('\r{0}{1}', log.indent_level*' ', message(current, args)), stdoutOnly=stdoutOnly
             )
 
         log.tracker = ProgressTracker(total, onIncrement=onIncrement, onFlush=onFlush, writeInterval=writeInterval)
