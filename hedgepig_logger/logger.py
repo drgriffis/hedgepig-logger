@@ -7,7 +7,7 @@ from collections import OrderedDict
 class log:
     logfile_path=None
     logfile=sys.stdout
-    stdout_also=False
+    stdout_also=True
     stopped=False
     tracker=None
     timer=None
