@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import codecs
@@ -227,6 +228,13 @@ class log:
         if end_time:
             log.write('End time: %s\n' % end_time.strftime(time_fmt))
             log.write('Execution time: %f seconds\n' % (end_time - start_time).total_seconds())
+
+        try:
+            script_path = os.path.abspath(sys.argv[0])
+            log.write('Generating script: %s\n' % script_path)
+        except:
+            pass
+
         log.write('\n')
 
         for (key, value) in settings:
