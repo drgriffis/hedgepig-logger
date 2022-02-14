@@ -9,42 +9,47 @@ class log:
     logfile_path=None
     logfile=sys.stdout
     stdout_also=True
-    stopped=False
     tracker=None
     timer=None
     autoflush=True
     indent_level=0
 
     @staticmethod
-    def start(logfile=None, message=None, args=None, stdout_also=True):
+    def start(logfile=None, settings=None, title=None, stdout_also=True):
         if logfile and type(logfile) == type('a'):
             log.logfile_path=logfile
             log.logfile=open(logfile, 'w')
-        if message and type(message) == type(lambda x: x):
-            if args: message(args)
-            else: message()
-        elif message and type(message) == type('str'):
-            log.writeln(message)
+        if settings:
+            log.writeConfig(
+                settings=settings,
+                title=title
+            )
         log.stdout_also=stdout_also
         log.indent_level=0
+
     @staticmethod
     def stop(message=None, suppress=False):
         if message:
             log.writeln(message)
+        log.write('\nLog stopped at %s\n' % (datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         if log.logfile != sys.stdout: 
             if (not suppress) and log.logfile_path:
-                log.writeln('\nLog output saved to %s' % log.logfile_path)
+                log.writeln('Log output saved to %s\n' % log.logfile_path)
             log.logfile.close()
-        log.stopped = True
+            log.logfile = sys.stdout
+
     @staticmethod
     def getstream():
         return log.logfile
+
     @staticmethod
     def indent(by=2):
         log.indent_level += by
+
     @staticmethod
     def unindent(by=2):
         log.indent_level = max(0, log.indent_level-by)
+
     @staticmethod
     def write(message, stdoutOnly=False, quiet=False):
         '''Write a string to the log stream, and optionally to stdout
@@ -60,8 +65,6 @@ class log:
                             (if log.stdout_also == True). If True, only write
                             message to the log stream.
         '''
-        if log.stopped:
-            raise Exception("Log has stopped!")
         if log.stdout_also and (log.getstream() != sys.stdout) and (not quiet):
             sys.stdout.write((log.indent_level*' ') + message)
         if (
@@ -77,10 +80,12 @@ class log:
     def writeln(message='', stdoutOnly=False, quiet=False):
         log.write(message, stdoutOnly=stdoutOnly, quiet=quiet)
         log.write('\n', stdoutOnly=stdoutOnly, quiet=quiet)
+
     @staticmethod
     def progress(current, total, numDots=0, stdoutOnly=False):
         line = str.format('\r{0}{1}%', numDots*'.', int((float(current)/total)*100))
         log.write(line, stdoutOnly=stdoutOnly)
+
     @staticmethod
     def yesno(bln):
         if bln: return 'Yes'
